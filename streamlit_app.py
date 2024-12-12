@@ -45,7 +45,7 @@ def show_authentication():
 
     # The login button has been removed here
     if st.button("Login", key="login_button"):
-        if password == "WagKaDito@2024":
+        if password == "123098":
             st.session_state["authenticated"] = True
             st.success("Please Click Login AGAIN!")
         else:
