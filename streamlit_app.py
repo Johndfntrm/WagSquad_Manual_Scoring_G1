@@ -230,7 +230,7 @@ def show_dashboard():
 
     # Display the QR code at the bottom
     st.markdown("---")
-    st.image("/mnt/data/qr.jpg", caption="Namamasko po! 😊", use_container_width=False, width=300)
+    st.image("/workspaces/WagSquad_Manual_Scoring_G1/qr.jpg", caption="Namamasko po! 😊", use_container_width=False, width=300)
 
 # Main script logic
 if st.session_state["authenticated"]:
