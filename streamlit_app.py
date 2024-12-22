@@ -43,14 +43,12 @@ def show_authentication():
         unsafe_allow_html=True
     )
 
-    # The login button has been removed here
     if st.button("Login", key="login_button"):
         if password == "123098":
             st.session_state["authenticated"] = True
             st.success("Please Click Login AGAIN!")
         else:
             st.error("WAG SQUAD ONLY BOI! WE BURN MONEY HERE!")
-
 
 def show_dashboard():
     # Define currencies and pairs
@@ -145,10 +143,10 @@ def show_dashboard():
         return ""
 
     # Prepare Trade Table (only GAP > 6 or GAP < -6 with BUY/SELL, exclude INVALID)
-    trade_df = pair_df[
-        ((pair_df["Gap"] > 5) | (pair_df["Gap"] < -5)) &
+    trade_df = pair_df[(
+        (pair_df["Gap"] > 5) | (pair_df["Gap"] < -5)) &
         (pair_df["Bias"].apply(lambda x: x[0]) != "INVALID")
-    ][["Pair", "Gap", "Bias"]]
+    ][["Pair", "Gap", "VS", "Bias"]]
 
     # Display Layout: Currency Table (left), Analysis Tables (center), Trade Table (right)
     st.subheader("Dashboard")
@@ -162,7 +160,7 @@ def show_dashboard():
     # Center: Analysis Tables (smaller font for compact view)
     with col2:
         st.markdown("Analysis")
-        styled_pair_df = pair_df[["Pair", "Gap", "VS", "Bias"]].copy()
+        styled_pair_df = pair_df[["Pair", "Gap", "VS", "Bias"]].copy()  # Include 'VS' here
         styled_pair_df["Bias"] = styled_pair_df["Bias"].apply(lambda x: f'<span style="color: {x[1]};">{x[0]}</span>')
         st.write(styled_pair_df.style.applymap(style_gap, subset=["Gap"]).set_table_styles(
             [{"selector": "table", "props": [("font-size", "12px")]}]
@@ -173,7 +171,6 @@ def show_dashboard():
         st.write("   ")
 
     # Right: Trade Table
-                # Right: Trade Table
     with col3:
         st.markdown("Trade Plan")
         if trade_df.empty:
@@ -183,39 +180,40 @@ def show_dashboard():
             styled_trade_df["Bias"] = styled_trade_df["Bias"].apply(lambda x: f'<span style="color: {x[1]};">{x[0]}</span>')
             st.write(styled_trade_df.to_html(escape=False), unsafe_allow_html=True)
 
-                    # Generate a timestamp in Philippine Time
+            # Generate a timestamp in Philippine Time
             philippine_time = datetime.now(pytz.timezone("Asia/Manila"))
             formatted_time = philippine_time.strftime("%I:%M%p of %B %d %Y %A")
 
-                    # Add a download button for PNG
+            # Add a download button for PNG
             st.markdown("Download Trade Plan")
             fig, ax = plt.subplots(figsize=(8, len(trade_df) * 0.5 + 1))
             ax.axis('tight')
             ax.axis('off')
 
-                    # Render table with styles in PNG
+            # Render table with styles in PNG, now including 'VS' column
             table = ax.table(
-            cellText=trade_df.apply(lambda row: [
-                    row["Pair"],
-                    row["Gap"],
-                    f"{row['Bias'][0]}"
-                ], axis=1).tolist(),
-                    colLabels=["Pair", "Gap", "Bias"],
-                    cellLoc='center',
-                        loc='center'
-                    )
+                cellText=trade_df.apply(lambda row: [
+                        row["Pair"],
+                        row["Gap"],
+                        row["VS"],  # Include VS here
+                        f"{row['Bias'][0]}"
+                    ], axis=1).tolist(),
+                colLabels=["Pair", "Gap", "VS", "Bias"],  # Include VS in column labels
+                cellLoc='center',
+                loc='center'
+            )
 
-                    # Apply styles
+            # Apply styles for 'Bias' (BUY/SELL)
             for i, row in enumerate(trade_df.values):
-                        bias = row[2]
-                        if bias[0] == "SELL":
-                            for j in range(len(row)):
-                                table[(i + 1, j)].set_facecolor("red")
-                        elif bias[0] == "BUY":
-                            for j in range(len(row)):
-                                table[(i + 1, j)].set_facecolor("green")
+                bias = row[3]  # Bias is in the 4th column now
+                if bias[0] == "SELL":
+                    for j in range(len(row)):
+                        table[(i + 1, j)].set_facecolor("red")
+                elif bias[0] == "BUY":
+                    for j in range(len(row)):
+                        table[(i + 1, j)].set_facecolor("green")
 
-                    # Add timestamp and name
+            # Add timestamp and name
             plt.text(0.5, -0.05, f"Trade Plan ({formatted_time})", ha='center', fontsize=10, transform=ax.transAxes)
             plt.text(0.5, -0.1, "WagScore Remastered By: John D.", ha='center', fontsize=10, transform=ax.transAxes)
 
@@ -224,11 +222,15 @@ def show_dashboard():
             buf.seek(0)
 
             st.download_button(
-                        label=f"Download Trade Plan as PNG ({formatted_time})",
-                        data=buf,
-                        file_name=f"trade_plan_{philippine_time.strftime('%Y%m%d_%H%M%S')}.png",
-                        mime="image/png"
-                    )
+                label=f"Download Trade Plan as PNG ({formatted_time})",
+                data=buf,
+                file_name=f"trade_plan_{philippine_time.strftime('%Y%m%d_%H%M%S')}.png",
+                mime="image/png"
+            )
+
+    # Display the QR code at the bottom
+    st.markdown("---")
+    st.image("/workspaces/WagSquad_Manual_Scoring_G1/qr.jpg", caption="Namamasko po! 😊", use_container_width=False, width=300)
 
 # Main script logic
 if st.session_state["authenticated"]:
